@@ -3,7 +3,12 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
+import { Potta_One } from "next/font/google"
 
+const pottaOne = Potta_One({
+  weight: "400",
+  subsets: ["latin"],
+})
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -24,7 +29,7 @@ export function Header() {
               alt="Logo"
               className="w-8 h-8 rounded-lg mr-3 object-cover"
             />
-            <h1 className={`text-2xl md:text-3xl font-bold text-primary`}>
+            <h1 className={`${pottaOne.className} text-2xl md:text-3xl font-bold text-primary`}>
               Cơm Tô Nhật Bản
             </h1>
           </div>
