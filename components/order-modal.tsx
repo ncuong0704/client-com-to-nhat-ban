@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState, useActionState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,7 +16,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import type { Dish } from "@/components/menu-section"
+import type { Dish } from "@/components/menu-section.client"
+import { contactFormAction } from "@/data/action"
+import { StrapiImage } from "./StrapiImage"
 
 interface OrderModalProps {
   dish: Dish | null
@@ -46,56 +48,84 @@ interface OrderModalProps {
   }>
   onUpdateItem?: (index: number, quantity: number) => void
   onRemoveItem?: (index: number) => void
+  onClearCart?: () => void
 }
 
-export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, lastAdded, cartItems = [], onUpdateItem, onRemoveItem }: OrderModalProps) {
+export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, lastAdded, cartItems = [], onUpdateItem, onRemoveItem, onClearCart }: OrderModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
-    district: "",
-    ward: "",
     address: "",
-    shippingProvider: "",
   })
   const [successOpen, setSuccessOpen] = useState(false)
-  const [successInfo, setSuccessInfo] = useState<{ cartCount: number; cartTotal: number; shippingProvider?: string } | null>(null)
+  const [successInfo, setSuccessInfo] = useState<{ cartCount: number; cartTotal: number } | null>(null)
   const [showAllItems, setShowAllItems] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Giả lập submit thành công -> mở dialog thành công
-    setSuccessInfo({ cartCount, cartTotal, shippingProvider: formData.shippingProvider || undefined })
-    setSuccessOpen(true)
-    setFormData({ name: "", phone: "", district: "", ward: "", address: "", shippingProvider: "" })
-    onClose()
-  }
+  const initialFormState = useMemo(() => ({ zodErrors: null as any, strapiErrors: null as any, errorMessage: null as string | null, successMessage: null as string | null }), [])
+  const [state, formAction] = useActionState(contactFormAction as any, initialFormState)
+
+  // Build rich text JSON (order snapshot)
+  const contentHtml = useMemo(() => {
+    const th = (text: string) => `<th style="border:1px solid #e5e7eb;padding:8px;background:#f8fafc;text-align:left;font-weight:600;">${text}</th>`
+    const td = (text: string) => `<td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">${text}</td>`
+    const currency = (n: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n)
+    const rows = (cartItems || []).map((it, idx) => {
+      const toppings = (it.toppings && it.toppings.length) ? it.toppings.join(", ") : "—"
+      const notes = it.notes && it.notes.trim() ? it.notes : "—"
+      return `<tr>
+        ${td(String(idx + 1))}
+        ${td(it.name)}
+        ${td(String(it.quantity))}
+        ${td(currency(it.unitPrice))}
+        ${td(currency(it.toppingTotal))}
+        ${td(currency(it.total))}
+        ${td(toppings)}
+        ${td(notes)}
+      </tr>`
+    }).join("")
+    const table = `
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;font-size:14px;">
+        <thead>
+          <tr>
+            ${th("#")}
+            ${th("Món")}
+            ${th("SL")}
+            ${th("Đơn giá")}
+            ${th("Phụ phí")}
+            ${th("Thành tiền")}
+            ${th("Topping")}
+            ${th("Ghi chú")}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" style="border:1px solid #e5e7eb;padding:8px;text-align:right;font-weight:600;">Tổng số món</td>
+            <td style="border:1px solid #e5e7eb;padding:8px;font-weight:600;">${cartCount.toLocaleString("vi-VN")}</td>
+            <td colspan="3" style="border:1px solid #e5e7eb;padding:8px;text-align:right;font-weight:600;">Tổng tiền: ${currency(cartTotal)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    `
+    return table
+  }, [cartItems, cartCount, cartTotal])
+
+  useEffect(() => {
+    if (state && state.successMessage) {
+      setSuccessInfo({ cartCount, cartTotal })
+      setSuccessOpen(true)
+      setFormData({ name: "", phone: "", address: "" })
+      onClearCart && onClearCart()
+      onClose()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.successMessage])
 
   const priceFormatter = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" })
 
-  // Minimal district/ward lists for HCMC demo; can be extended or fetched
-  const districts = [
-    "Quận 1",
-    "Quận 3",
-    "Quận 5",
-    "Quận 7",
-    "Quận 10",
-    "Quận Bình Thạnh",
-    "Quận Gò Vấp",
-    "TP Thủ Đức",
-  ]
-
-  const wardsByDistrict: Record<string, string[]> = {
-    "Quận 1": ["Phường Bến Nghé", "Phường Bến Thành", "Phường Cầu Ông Lãnh"],
-    "Quận 3": ["Phường 6", "Phường 7", "Phường Võ Thị Sáu"],
-    "Quận 5": ["Phường 1", "Phường 4", "Phường 6"],
-    "Quận 7": ["Phú Mỹ", "Tân Phú", "Tân Quy"],
-    "Quận 10": ["Phường 1", "Phường 5", "Phường 10"],
-    "Quận Bình Thạnh": ["Phường 1", "Phường 5", "Phường 26"],
-    "Quận Gò Vấp": ["Phường 3", "Phường 5", "Phường 10"],
-    "TP Thủ Đức": ["Phường Linh Trung", "Phường Linh Tây", "Phường Hiệp Bình Chánh"],
-  }
-
-  const wards = formData.district ? wardsByDistrict[formData.district] || [] : []
+  // Đã bỏ lựa chọn quận/phường và dịch vụ vận chuyển theo yêu cầu
 
   return (
     <>
@@ -107,7 +137,7 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
         <DialogHeader className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b p-3">
           <div className="flex items-center justify-between gap-3 py-2">
             <DialogTitle className="text-2xl">Xác nhận đơn hàng</DialogTitle>
-            <DialogClose className="rounded-md p-2 text-muted-foreground hover:bg-accent" aria-label="Đóng">
+            <DialogClose className="rounded-md p-2 text-muted-foreground hover:bg-accent cursor-pointer" aria-label="Đóng">
               ✕
             </DialogClose>
           </div>
@@ -128,7 +158,13 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
               <div className="order-cart-scrollbar">
                 {(showAllItems ? cartItems : cartItems.slice(0, 1)).map((item, index) => (
                   <div key={`${item.dishId}-${index}`} className="border rounded-lg p-2 flex gap-3">
-                    <img src={item.image || "/placeholder.svg"} alt={item.name} className="w-14 h-14 rounded-md object-cover border" />
+                    <StrapiImage
+                      src={item.image}
+                      alt={item.name}
+                      width={56}
+                      height={56}
+                      className="w-14 h-14 rounded-md object-cover border"
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="font-semibold text-foreground truncate">{item.name}</div>
                       <div className="text-xs mt-1 text-muted-foreground">
@@ -217,9 +253,11 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
           )}
           {lastAdded && (
             <div className="border rounded-lg p-3 mb-4 flex gap-3">
-              <img
-                src={lastAdded.image || "/placeholder.svg"}
+              <StrapiImage
+                src={lastAdded.image}
                 alt={lastAdded.name}
+                width={64}
+                height={64}
                 className="w-16 h-16 rounded-md object-cover border"
               />
               <div className="min-w-0">
@@ -237,7 +275,7 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
               </div>
             </div>
           )}
-          <form onSubmit={handleSubmit}>
+          <form action={formAction}>
             <div className="grid gap-6 py-4">
 
               <div className="grid gap-2">
@@ -252,6 +290,7 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
                   required
                   className="h-11"
                 />
+                <input type="hidden" name="fullName" value={formData.name} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="phone" className="text-base">
@@ -266,37 +305,7 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
                   required
                   className="h-11"
                 />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="district" className="text-base">Quận (TP. Hồ Chí Minh)</Label>
-                <select
-                  id="district"
-                  className="h-11 rounded-md border bg-background px-3"
-                  value={formData.district}
-                  onChange={(e) => setFormData({ ...formData, district: e.target.value, ward: "" })}
-                  required
-                >
-                  <option value="" disabled>Chọn quận</option>
-                  {districts.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="ward" className="text-base">Phường</Label>
-                <select
-                  id="ward"
-                  className="h-11 rounded-md border bg-background px-3"
-                  value={formData.ward}
-                  onChange={(e) => setFormData({ ...formData, ward: e.target.value })}
-                  required
-                  disabled={!formData.district}
-                >
-                  <option value="" disabled>{formData.district ? "Chọn phường" : "Chọn quận trước"}</option>
-                  {wards.map((w) => (
-                    <option key={w} value={w}>{w}</option>
-                  ))}
-                </select>
+                <input type="hidden" name="telephone" value={formData.phone} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="address" className="text-base">
@@ -310,31 +319,17 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
                   required
                   rows={3}
                 />
+                <input type="hidden" name="address" value={formData.address} />
+                <p className="text-xs font-medium text-green-600">
+                  Miễn phí ship trong bán kính 5km. Ngoài bán kính, nhân viên sẽ báo phí ship khi xác nhận đơn.
+                </p>
               </div>
-              <div>
-                <div className="text-base font-medium mb-2">Dịch vụ vận chuyển</div>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { key: "grab", label: "Grab" },
-                    { key: "xanhsm", label: "XanhSM" },
-                  ].map((opt) => (
-                    <label
-                      key={opt.key}
-                      className={`flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer ${formData.shippingProvider === opt.key ? "bg-accent" : "bg-background"}`}
-                    >
-                      <input
-                        type="radio"
-                        name="shippingProvider"
-                        className="accent-primary"
-                        checked={formData.shippingProvider === opt.key}
-                        onChange={() => setFormData({ ...formData, shippingProvider: opt.key })}
-                        required
-                      />
-                      <span className="text-sm">{opt.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+              {/* Honeypot & timestamp */}
+              <input type="text" name="website" className="hidden" tabIndex={-1} autoComplete="off" />
+              <input type="hidden" name="timestamp" value={String(Date.now())} />
+              {/* Rich text HTML table snapshot */}
+              <input type="hidden" name="content" value={contentHtml} />
+              
             </div>
             <DialogFooter className="sticky bottom-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-3 border-t">
               <Button
@@ -345,6 +340,9 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
               </Button>
             </DialogFooter>
           </form>
+          {state?.errorMessage && (
+            <div className="px-3 pb-3 text-sm text-destructive">{state.errorMessage}</div>
+          )}
         </div>
 
       </DialogContent>
@@ -365,18 +363,15 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
             <span className="text-muted-foreground">Tổng tiền</span>
             <span className="font-semibold text-primary">{priceFormatter.format(successInfo?.cartTotal ?? 0)}</span>
           </div>
-          {successInfo?.shippingProvider && (
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Vận chuyển</span>
-              <span className="font-medium capitalize">{successInfo.shippingProvider}</span>
-            </div>
-          )}
+          <div className="pt-1 text-xs text-muted-foreground">
+            Miễn phí ship trong bán kính 5km. Ngoài bán kính, nhân viên sẽ báo phí ship khi xác nhận đơn.
+          </div>
           <div className="pt-2">
             <span className="text-xs text-orange-500 font-semibold">Lưu ý để ý điện thoại</span>
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={() => setSuccessOpen(false)} className="rounded-full w-full">Đóng</Button>
+          <Button onClick={() => setSuccessOpen(false)} className="rounded-full w-full cursor-pointer">Đóng</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

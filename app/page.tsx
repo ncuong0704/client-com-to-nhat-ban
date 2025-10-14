@@ -1,17 +1,16 @@
-import { Header } from "@/components/header"
-import { HeroSection } from "@/components/hero-section"
-import { MenuSection } from "@/components/menu-section"
-import { Footer } from "@/components/footer"
+// app/page.tsx - Có thể thêm metadata
+import { redirect } from 'next/navigation';
+import type { Metadata } from "next"
 
-export default function Home() {
-  return (
-    <div className="min-h-screen">
-      <Header />
-      <main>
-        <HeroSection />
-        <MenuSection />
-      </main>
-      <Footer />
-    </div>
-  )
+export const metadata: Metadata = {
+  title: 'Công ty Luật Dedica',
+  description: 'Công ty luật chuyên nghiệp tại Việt Nam',
+  robots: {
+    index: true,
+    follow: true,
+  },
+}
+
+export default function HomePage() {
+  redirect('/vi');
 }

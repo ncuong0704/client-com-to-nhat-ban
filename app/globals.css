@@ -107,3 +107,8 @@
 @utility animate-fade-up {
   animation: fade-up 700ms ease-out both;
 }
+
+.icon-social svg{
+  width: 100%;
+  height: 100%;
+}
