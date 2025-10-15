@@ -199,7 +199,7 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
                 className="w-20 h-20 rounded-md object-cover border"
               />
               <div className="w-full">
-                <div className="text-base font-semibold text-foreground truncate">{dish.name}</div>
+                <div className="text-base font-semibold text-foreground">{dish.name}</div>
                 <div className="text-sm text-muted-foreground line-clamp-2">{dish.description}</div>
                 <div className="flex items-center justify-between mt-2">
                   <div className="text-sm text-muted-foreground flex flex-wrap">
