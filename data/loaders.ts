@@ -228,6 +228,10 @@ export async function getDishData(locale: string) {
           }
         },
         locale,
+        pagination: {
+          page: 1,
+          pageSize: 1000 // số lớn để lấy tất cả món
+        }
       }
     )
 
@@ -255,6 +259,10 @@ export async function getVideoData(locale: string) {
           category_video: true,
         },
         locale,
+        pagination: {
+          page: 1,
+          pageSize: 1000 // số lớn để lấy tất cả video
+        }
       }
     )
 
