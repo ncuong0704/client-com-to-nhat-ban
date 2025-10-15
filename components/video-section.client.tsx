@@ -51,8 +51,8 @@ export function VideoSectionClient({ video, videoRes }: { video: VideoSectionPro
   const categoryOrderMap = useMemo(() => {
     const map = new Map<string, number>()
     for (const v of (videoRes?.data ?? []) as VideoItem[]) {
-      const name = v.category_video.name
-      const order = v.category_video.order ?? Number.POSITIVE_INFINITY
+      const name = v.category_video?.name || "Không xác định"
+      const order = v.category_video?.order ?? Number.POSITIVE_INFINITY
       if (!map.has(name) || (map.get(name)! > order)) {
         map.set(name, order)
       }
@@ -61,16 +61,16 @@ export function VideoSectionClient({ video, videoRes }: { video: VideoSectionPro
   }, [videoRes?.data])
 
   const categories = useMemo((): string[] => {
-    const cats = Array.from(new Set((videoRes?.data as VideoItem[] | undefined)?.map((v) => v.category_video.name) ?? []))
+    const cats = Array.from(new Set((videoRes?.data as VideoItem[] | undefined)?.map((v) => v.category_video?.name || "Không xác định") ?? []))
     return cats.sort((a, b) => (categoryOrderMap.get(a) ?? Infinity) - (categoryOrderMap.get(b) ?? Infinity))
   }, [videoRes?.data, categoryOrderMap])
 
   // compute filtered videos (by category only)
   const filteredVideos = useMemo((): VideoItem[] => {
-    const filtered = (videoRes?.data as VideoItem[] | undefined)?.filter((v: VideoItem) => (selectedCategory ? v.category_video.name === selectedCategory : true)) ?? []
+    const filtered = (videoRes?.data as VideoItem[] | undefined)?.filter((v: VideoItem) => (selectedCategory ? v.category_video?.name || "Không xác định" === selectedCategory : true)) ?? []
     return (filtered as VideoItem[]).slice().sort((a: VideoItem, b: VideoItem) => {
-      const oa = a.category_video.order ?? Number.POSITIVE_INFINITY
-      const ob = b.category_video.order ?? Number.POSITIVE_INFINITY
+      const oa = a.category_video?.order ?? Number.POSITIVE_INFINITY
+      const ob = b.category_video?.order ?? Number.POSITIVE_INFINITY
       if (oa !== ob) return oa - ob
       return (a.title ?? '').localeCompare(b.title ?? '')
     })
