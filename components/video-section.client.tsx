@@ -29,7 +29,7 @@ interface VideoItem {
     publishedAt: string
     locale: string
     order: number | null
-  }
+  } | null
   createdAt: string
   updatedAt: string
   publishedAt: string
@@ -51,7 +51,7 @@ export function VideoSectionClient({ video, videoRes }: { video: VideoSectionPro
   const categoryOrderMap = useMemo(() => {
     const map = new Map<string, number>()
     for (const v of (videoRes?.data ?? []) as VideoItem[]) {
-      const name = v.category_video?.name || "Không xác định"
+      const name = v.category_video?.name || 'Không xác định'
       const order = v.category_video?.order ?? Number.POSITIVE_INFINITY
       if (!map.has(name) || (map.get(name)! > order)) {
         map.set(name, order)
@@ -61,13 +61,13 @@ export function VideoSectionClient({ video, videoRes }: { video: VideoSectionPro
   }, [videoRes?.data])
 
   const categories = useMemo((): string[] => {
-    const cats = Array.from(new Set((videoRes?.data as VideoItem[] | undefined)?.map((v) => v.category_video?.name || "Không xác định") ?? []))
+    const cats = Array.from(new Set((videoRes?.data as VideoItem[] | undefined)?.map((v) => v.category_video?.name || 'Không xác định') ?? []))
     return cats.sort((a, b) => (categoryOrderMap.get(a) ?? Infinity) - (categoryOrderMap.get(b) ?? Infinity))
   }, [videoRes?.data, categoryOrderMap])
 
   // compute filtered videos (by category only)
   const filteredVideos = useMemo((): VideoItem[] => {
-    const filtered = (videoRes?.data as VideoItem[] | undefined)?.filter((v: VideoItem) => (selectedCategory ? v.category_video?.name || "Không xác định" === selectedCategory : true)) ?? []
+    const filtered = (videoRes?.data as VideoItem[] | undefined)?.filter((v: VideoItem) => (selectedCategory ? (v.category_video?.name || 'Không xác định') === selectedCategory : true)) ?? []
     return (filtered as VideoItem[]).slice().sort((a: VideoItem, b: VideoItem) => {
       const oa = a.category_video?.order ?? Number.POSITIVE_INFINITY
       const ob = b.category_video?.order ?? Number.POSITIVE_INFINITY
@@ -165,7 +165,7 @@ export function VideoSectionClient({ video, videoRes }: { video: VideoSectionPro
                   </div>
                 </button>
                 <div className="p-4">
-                  <div className="text-xs text-muted-foreground mb-1">{video.category_video.name}</div>
+                  <div className="text-xs text-muted-foreground mb-1">{video.category_video?.name || 'Không xác định'}</div>
                   <h3 className="text-base font-semibold line-clamp-2">{video.title}</h3>
                   <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{video.description}</p>
                 </div>

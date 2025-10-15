@@ -27,7 +27,7 @@ export interface Dish {
     publishedAt: string
     locale: string
     order: number | null
-  }
+  } | null
   price: number
   sold: number
   likes: number
@@ -60,7 +60,7 @@ export function MenuSectionClient({ menu, dishes, locale }: {
   const categoryOrderMap = useMemo(() => {
     const map = new Map<string, number>()
     for (const d of dishes ?? []) {
-      const name = d.category_dish?.name || "Không xác định"
+      const name = d.category_dish?.name || 'Không xác định'
       const order = d.category_dish?.order ?? Number.POSITIVE_INFINITY
       if (!map.has(name) || (map.get(name)! > order)) {
         map.set(name, order)
@@ -71,7 +71,7 @@ export function MenuSectionClient({ menu, dishes, locale }: {
 
   // Lấy danh sách categories theo thứ tự order
   const categories = useMemo(() => {
-    const uniq = Array.from(new Set(dishes?.map((d: Dish) => d.category_dish?.name || "Không xác định") ?? []))
+    const uniq = Array.from(new Set(dishes?.map((d: Dish) => d.category_dish?.name || 'Không xác định') ?? []))
     return uniq.sort((a, b) => (categoryOrderMap.get(a) ?? Infinity) - (categoryOrderMap.get(b) ?? Infinity))
   }, [dishes, categoryOrderMap])
 
@@ -81,7 +81,7 @@ export function MenuSectionClient({ menu, dishes, locale }: {
   const filteredDishes = useMemo(() => {
     const list = activeCategory === "Tất cả"
       ? (dishes ?? [])
-      : (dishes?.filter((d: Dish) => d.category_dish?.name || "Không xác định" === activeCategory) ?? [])
+      : (dishes?.filter((d: Dish) => (d.category_dish?.name || 'Không xác định') === activeCategory) ?? [])
     // Sắp xếp món theo order của category (nhỏ trước), sau đó theo tên để ổn định
     return list.slice().sort((a, b) => {
       const oa = a.category_dish?.order ?? Number.POSITIVE_INFINITY
