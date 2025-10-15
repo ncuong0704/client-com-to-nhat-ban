@@ -150,11 +150,11 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
           <div className="flex items-center justify-between ">
             <div className="text-sm text-muted-foreground flex flex-wrap">
               <span className="whitespace-nowrap">
-                {dish.sold.toLocaleString("vi-VN")} đã bán
+                {dish?.sold?.toLocaleString("vi-VN") || 0} đã bán
               </span>
               <span className="mx-1">·</span>
               <span className="whitespace-nowrap">
-                {dish.likes.toLocaleString("vi-VN")} lượt thích
+                {dish?.likes?.toLocaleString("vi-VN") || 0} lượt thích
               </span>
             </div>
             <div className="text-lg font-semibold text-primary ml-2 whitespace-nowrap">{priceFormatter.format(dish.price)}</div>
@@ -204,11 +204,11 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
                 <div className="flex items-center justify-between mt-2">
                   <div className="text-sm text-muted-foreground flex flex-wrap">
                     <span className="whitespace-nowrap">
-                      {dish.sold.toLocaleString("vi-VN")} đã bán
+                      {dish?.sold?.toLocaleString("vi-VN") || 0} đã bán
                     </span>
                     <span className="mx-1">·</span>
                     <span className="whitespace-nowrap">
-                      {dish.likes.toLocaleString("vi-VN")} lượt thích
+                      {dish?.likes?.toLocaleString("vi-VN") || 0} lượt thích
                     </span>
                   </div>
                   <div className="text-lg font-semibold text-primary ml-2 whitespace-nowrap">{priceFormatter.format(dish.price)}</div>
