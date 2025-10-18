@@ -116,7 +116,7 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
 
   return (
     <>
-      <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 border-border">
+      <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 border-border gap-0 p-0">
         <div className="relative aspect-[4/3] overflow-hidden">
           {/* Badges */}
           {badges.length > 0 && (
@@ -144,23 +144,43 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
             </div>
           )}
         </div>
-        <CardContent className="p-6">
-          <h3 className="text-xl font-bold text-foreground mb-1 text-balance">{dish.name}</h3>
-          <p className="text-muted-foreground text-sm leading-relaxed mb-3">{dish.description}</p>
-          <div className="flex items-center justify-between ">
-            <div className="text-sm text-muted-foreground flex flex-wrap">
-              <span className="whitespace-nowrap">
-                {dish?.sold?.toLocaleString("vi-VN") || 0} đã bán
-              </span>
-              <span className="mx-1">·</span>
-              <span className="whitespace-nowrap">
-                {dish?.likes?.toLocaleString("vi-VN") || 0} lượt thích
-              </span>
-            </div>
-            <div className="text-lg font-semibold text-primary ml-2 whitespace-nowrap">{priceFormatter.format(dish.price)}</div>
+        <CardContent className="p-3 md:p-6">
+          <h3
+            className="font-bold text-foreground mb-1 text-balance line-clamp-2"
+            style={{
+              fontSize: "18px",
+              lineHeight: "24px",
+              height: "48px",
+              // Mobile styles
+              ...(typeof window !== "undefined" && window.innerWidth < 640
+                ? {
+                    fontSize: "16px",
+                    lineHeight: "20px",
+                    height: "40px",
+                  }
+                : {}),
+            }}
+          >
+            {dish.name}
+          </h3>
+          <p
+            className="text-muted-foreground mb-3 line-clamp-2 break-words"
+            style={{
+              fontSize: "14px",
+              lineHeight: "20px",
+              height: "40px",
+            }}
+          >
+            {dish.description}
+          </p>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-lg font-semibold text-primary whitespace-nowrap">{priceFormatter.format(dish.price)}</div>
+            <span className="whitespace-nowrap text-sm text-muted-foreground" style={{ fontSize: "12px" }}>
+              Đã bán {dish?.sold?.toLocaleString("vi-VN") || 0}
+            </span>
           </div>
         </CardContent>
-        <CardFooter className="p-6 pt-0">
+        <CardFooter className="p-3 md:p-6 pt-0 md:pt-0">
           <Button
             onClick={() => setOpen(true)}
             disabled={isSoldOut}
@@ -170,8 +190,6 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
             {isSoldOut ? "Hết hàng" : "Thêm món"}
           </Button>
         </CardFooter>
-
-
       </Card>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[100vh] overflow-y-auto w-full min-w-full sm:max-w-lg sm:min-w-0 p-0">

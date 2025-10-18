@@ -54,6 +54,7 @@ export function MenuSectionClient({ menu, dishes, locale }: {
   dishes: Dish[], 
   locale: string 
 }) {
+  console.log(dishes)
   const [orderOpen, setOrderOpen] = useState(false)
   
   // Tính order cho từng category dựa trên category_dish.order (nhỏ trước, null coi như lớn)
@@ -77,6 +78,10 @@ export function MenuSectionClient({ menu, dishes, locale }: {
 
   const categoriesWithAll = ["Tất cả", ...categories]
   const [activeCategory, setActiveCategory] = useState<string>("Tất cả")
+
+  const scrollTo = (scrollTo: string) => {
+    document.getElementById(scrollTo)?.scrollIntoView({ behavior: "smooth" })
+  }
 
   const filteredDishes = useMemo(() => {
     const list = activeCategory === "Tất cả"
@@ -126,10 +131,10 @@ export function MenuSectionClient({ menu, dishes, locale }: {
 
   return (
     <>
-      <section id="menu" className="py-16 md:py-24 bg-background">
+      <section id="menu" className="py-8 md:py-24 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <RevealSection slide={10}>
-            <div className="text-center mb-12 md:mb-16">
+            <div className="text-center">
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4 text-primary">
                 {menu.title}
               </h2>
@@ -138,10 +143,16 @@ export function MenuSectionClient({ menu, dishes, locale }: {
               </p>
             </div>
           </RevealSection>
+        </div>
+      </section>
 
-          {/* Category Filters */}
-          <RevealSection delayMs={80}>
-            <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 mb-10 md:mb-12">
+      {/* Category Filters - Sticky */}
+      <div id="category-filters"></div>
+      <div  className="sticky top-[64px] md:top-[81px] z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/50 py-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Mobile: Horizontal scroll */}
+          <div className="md:hidden overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-3 pb-2 min-w-max">
               {categoriesWithAll.map((cat) => {
                 const isActive = cat === activeCategory
                 return (
@@ -150,17 +161,41 @@ export function MenuSectionClient({ menu, dishes, locale }: {
                     size="sm"
                     variant={isActive ? "default" : "outline"}
                     aria-pressed={isActive}
-                    onClick={() => setActiveCategory(cat as string)}
-                    className={`${isActive ? "" : "border-border"} cursor-pointer`}
+                    onClick={() => {setActiveCategory(cat as string); scrollTo("category-filters")}}
+                    className={`${isActive ? "" : "border-border"} cursor-pointer whitespace-nowrap flex-shrink-0`}
                   >
                     {cat as string}
                   </Button>
                 )
               })}
             </div>
-          </RevealSection>
+          </div>
+          
+          {/* Desktop: Wrap layout */}
+          <div className="hidden md:flex flex-wrap items-center justify-center gap-4">
+            {categoriesWithAll.map((cat) => {
+              const isActive = cat === activeCategory
+              return (
+                <Button
+                  key={cat as string}
+                  size="sm"
+                  variant={isActive ? "default" : "outline"}
+                  aria-pressed={isActive}
+                  onClick={() => {setActiveCategory(cat as string); scrollTo("category-filters")}}
+                  className={`${isActive ? "" : "border-border"} cursor-pointer`}
+                >
+                  {cat as string}
+                </Button>
+              )
+            })}
+          </div>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+      <section className="py-8 md:py-12 bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
             {filteredDishes.map((dish: Dish, idx: number) => (
               <RevealSection key={dish.documentId} delayMs={idx * 60}>
                 <DishCard dish={dish} onOrder={() => {}} onAddToCart={handleAddToCart} />
