@@ -8,7 +8,7 @@ export async function VideoSection({ video, locale }: { video: VideoSectionProps
     getVideoData(locale),
   ])
   console.log(videoRes)
-  if (!videoRes || !videoRes.data) {
+  if (!videoRes) {
     return <Loading />
   }
   return (

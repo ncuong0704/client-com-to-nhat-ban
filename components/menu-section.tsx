@@ -9,7 +9,7 @@ export async function MenuSection({ menu, locale }: { menu: MenuSectionProps, lo
   const [dishRes] = await Promise.all([
     getDishData(locale),
   ])
-  if (!dishRes || !dishRes.data) {
+  if (!dishRes) {
     return <Loading />
   }
   return (

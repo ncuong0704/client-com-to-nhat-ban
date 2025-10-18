@@ -14,7 +14,7 @@ type Props = {
 export default async function Home({ params }: Props) {
   const { locale } = await params
   const data = await getDataCached(locale)
-  if (!data || !data.data) {
+  if (!data) {
     return <Loading />
   }
   const blocks = data.data.blocks

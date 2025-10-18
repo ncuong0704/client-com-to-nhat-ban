@@ -66,7 +66,7 @@ export default async function RootLayout({
 }) {
   const { locale } = await params
   const data = await getGlobalData(locale)
-  if (!data || !data.data) {
+  if (!data) {
     return <Loading />
   }
   const header = data.data.header
