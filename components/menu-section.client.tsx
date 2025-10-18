@@ -197,7 +197,7 @@ export function MenuSectionClient({ menu, dishes, locale }: {
 
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
             {filteredDishes.map((dish: Dish, idx: number) => (
-              <RevealSection key={dish.documentId} delayMs={idx * 60}>
+              <RevealSection key={dish.documentId} delayMs={idx}>
                 <DishCard dish={dish} onOrder={() => {}} onAddToCart={handleAddToCart} />
               </RevealSection>
             ))}
