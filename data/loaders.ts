@@ -67,7 +67,7 @@ export async function getGlobalData(locale: string) {
     // ✅ OPTIMIZED CACHING - Tăng cache time cho home page
     const result = await fetchAPI(url.href, {
       method: "GET",
-      next: { revalidate: 60, tags: ["global-data", `global-data-${locale}`] }
+      next: { revalidate: 3600, tags: ["global-data", `global-data-${locale}`] }
     });
     return result;
   } catch (error) {
@@ -179,7 +179,7 @@ export async function getLandingPageData(locale: string) {
     // ✅ OPTIMIZED CACHING - Tăng cache time cho home page
     const result = await fetchAPI(url.href, {
       method: "GET",
-      next: { revalidate: 60, tags: ["landing-page", `landing-page-${locale}`] }
+      next: { revalidate: 3600, tags: ["landing-page", `landing-page-${locale}`] }
     });
     return result;
   } catch (error) {
@@ -239,7 +239,7 @@ export async function getDishData(locale: string) {
 
     const result = await fetchAPI(url.href, {
       method: "GET",
-      next: { revalidate: 60, tags: ["dish", `dish-${locale}`] }
+      next: { revalidate: 3600, tags: ["dish", `dish-${locale}`] }
     });
     return result;
   } catch (error) {
@@ -270,7 +270,7 @@ export async function getVideoData(locale: string) {
 
     const result = await fetchAPI(url.href, {
       method: "GET",
-      next: { revalidate: 60, tags: ["video", `video-${locale}`] }
+      next: { revalidate: 3600, tags: ["video", `video-${locale}`] }
     });
     return result;
   } catch (error) {
