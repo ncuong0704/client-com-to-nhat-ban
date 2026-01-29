@@ -12,6 +12,9 @@ export const metadata: Metadata = {
     template: '%s | Cơm Tô Nhật Bản'
   },
   description: 'Nhà hàng cơm tô Nhật Bản (Donburi) – món ngon mỗi ngày, giao hàng tận nơi.',
+  verification: {
+    google: 'xW-PlbVDPUy2XflZZkESv1FrXWTQBFcZw9BQNyDm7Qg',
+  },
   robots: {
     index: true,
     follow: true,
