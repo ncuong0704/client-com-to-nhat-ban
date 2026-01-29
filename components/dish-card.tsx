@@ -148,17 +148,9 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
           <h3
             className="font-bold text-foreground mb-1 text-balance line-clamp-2"
             style={{
-              fontSize: "18px",
-              lineHeight: "24px",
-              height: "48px",
-              // Mobile styles
-              ...(typeof window !== "undefined" && window.innerWidth < 640
-                ? {
-                    fontSize: "16px",
-                    lineHeight: "20px",
-                    height: "40px",
-                  }
-                : {}),
+              fontSize: "16px",
+              lineHeight: "20px",
+              height: "40px",
             }}
           >
             {dish.name}

@@ -54,7 +54,6 @@ export function MenuSectionClient({ menu, dishes, locale }: {
   dishes: Dish[], 
   locale: string 
 }) {
-  console.log(dishes)
   const [orderOpen, setOrderOpen] = useState(false)
   
   // Tính order cho từng category dựa trên category_dish.order (nhỏ trước, null coi như lớn)

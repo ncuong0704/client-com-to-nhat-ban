@@ -61,8 +61,16 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
   const [successInfo, setSuccessInfo] = useState<{ cartCount: number; cartTotal: number } | null>(null)
   const [showAllItems, setShowAllItems] = useState(false)
 
-  const initialFormState = useMemo(() => ({ zodErrors: null as any, strapiErrors: null as any, errorMessage: null as string | null, successMessage: null as string | null }), [])
-  const [state, formAction] = useActionState(contactFormAction as any, initialFormState)
+  const initialFormState = useMemo(
+    () => ({
+      zodErrors: null as any,
+      strapiErrors: null as any,
+      errorMessage: null as string | null,
+      successMessage: null as string | null,
+    }),
+    [],
+  )
+  const [state, formAction, isSubmitting] = useActionState(contactFormAction as any, initialFormState)
 
   // Build rich text JSON (order snapshot)
   const contentHtml = useMemo(() => {
@@ -132,7 +140,7 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         showCloseButton={false}
-        className="w-full sm:min-w-0 sm:max-w-[600px] max-h-[100vh] overflow-y-auto p-0 min-w-full"
+        className="w-[600px] max-w-[100vw] max-h-[100vh] overflow-y-auto p-0"
       >
         <DialogHeader className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b p-3">
           <div className="flex items-center justify-between gap-3 py-2">
@@ -166,7 +174,7 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
                       className="w-14 h-14 rounded-md object-cover border"
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="font-semibold text-foreground truncate">{item.name}</div>
+                      <div className="font-semibold text-foreground">{item.name}</div>
                       <div className="text-xs mt-1 text-muted-foreground">
                         {item.isSpicy !== null && (
                           <>
@@ -334,9 +342,10 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
             <DialogFooter className="sticky bottom-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-3 border-t">
               <Button
                 type="submit"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full w-full cursor-pointer"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full w-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+                disabled={isSubmitting}
               >
-                Đặt đơn
+                {isSubmitting ? "Đang gửi..." : "Đặt đơn"}
               </Button>
             </DialogFooter>
           </form>

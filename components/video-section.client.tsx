@@ -146,6 +146,7 @@ export function VideoSectionClient({ video, videoRes }: { video: VideoSectionPro
                   onClick={() => openVideo(video)}
                 >
                   <div className="relative aspect-video overflow-hidden">
+                   
                     <StrapiImage
                       src={getYoutubeThumbnail(video.youtubeId as string)}
                       alt={video.title}

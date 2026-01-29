@@ -67,7 +67,10 @@ export default async function RootLayout({
   const { locale } = await params
   const data = await getGlobalData(locale)
   if (!data) {
-    return <Loading />
+    // Sử dụng timestamp để force remount component mỗi lần server component render
+    // Khi router.refresh() được gọi, server component sẽ re-render và tạo key mới
+    const refreshKey = `loading-${Date.now()}-${Math.random()}`
+    return <Loading key={refreshKey} autoReload={true} reloadDelay={15000} />
   }
   const header = data.data.header
   const footer = data.data.footer

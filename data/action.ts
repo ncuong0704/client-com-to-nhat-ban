@@ -114,9 +114,9 @@ export async function contactFormAction(prevState: any, formData: FormData) {
         };
     }
 
-    // ✅ SEND EMAIL NOTIFICATION (non-blocking)
-    // Don't await - send in background to not slow down response
-    await sendContactFormNotification({
+    // ✅ Gửi email thông báo (không chờ hoàn tất, chạy nền để không làm chậm phản hồi)
+    // Không dùng await - gửi email ngầm, phản hồi người dùng ngay lập tức
+    sendContactFormNotification({
         fullName: dataToSend.fullName,
         telephone: dataToSend.telephone,
         address: dataToSend.address,

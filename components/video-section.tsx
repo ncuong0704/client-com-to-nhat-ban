@@ -7,7 +7,6 @@ export async function VideoSection({ video, locale }: { video: VideoSectionProps
   const [videoRes] = await Promise.all([
     getVideoData(locale),
   ])
-  console.log(videoRes)
   if (!videoRes) {
     return <Loading />
   }

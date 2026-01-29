@@ -74,7 +74,7 @@ export function Header({ header }: { header: HeaderProps }) {
               </button>
             ))}
 
-            <div className="relative">
+            {/* <div className="relative">
               <button
                 type="button"
                 className="flex items-center gap-1 px-3 py-1 hover:bg-muted transition-colors text-sm"
@@ -124,7 +124,7 @@ export function Header({ header }: { header: HeaderProps }) {
                   </li>
                 </ul>
               )}
-            </div>
+            </div> */}
             <Button
               size="lg"
               className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 cursor-pointer"
@@ -157,7 +157,7 @@ export function Header({ header }: { header: HeaderProps }) {
                 </button>
               ))}
               {/* Language Selector (Mobile) */}
-              <div className="relative">
+              {/* <div className="relative">
                 <button
                   type="button"
                   className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors text-sm"
@@ -209,7 +209,7 @@ export function Header({ header }: { header: HeaderProps }) {
                     </li>
                   </ul>
                 )}
-              </div>
+              </div> */}
               <Button
                 size="lg"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full w-full"
