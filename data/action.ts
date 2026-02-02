@@ -116,7 +116,7 @@ export async function contactFormAction(prevState: any, formData: FormData) {
 
     // ✅ Gửi email thông báo (không chờ hoàn tất, chạy nền để không làm chậm phản hồi)
     // Không dùng await - gửi email ngầm, phản hồi người dùng ngay lập tức
-    sendContactFormNotification({
+    await sendContactFormNotification({
         fullName: dataToSend.fullName,
         telephone: dataToSend.telephone,
         address: dataToSend.address,
