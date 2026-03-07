@@ -19,6 +19,7 @@ export function HeroSection({ hero }: { hero: HeroProps }) {
           alt={hero.background.alternativeText || hero.title || "Hero background"}
           width={1920}
           height={1080}
+          type="hero"
           className="w-full h-full object-cover animate-hero-zoom-out"
           priority
         />

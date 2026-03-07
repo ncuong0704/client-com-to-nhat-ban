@@ -135,6 +135,7 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
             alt={dish.name}
             width={640}
             height={480}
+            type="thumbnail"
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
           {isSoldOut && <div className="absolute inset-0 bg-black/40" />}
@@ -206,6 +207,7 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
                 alt={dish.image?.alternativeText || dish.name}
                 width={80}
                 height={80}
+                type="thumbnail"
                 className="w-20 h-20 rounded-md object-cover border"
               />
               <div className="w-full">

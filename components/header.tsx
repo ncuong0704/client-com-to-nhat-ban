@@ -53,6 +53,7 @@ export function Header({ header }: { header: HeaderProps }) {
               src={header.logo.image.url}
               width={56}
               height={56}
+              type="thumbnail"
               alt={header.logo.image.alternativeText || header.logo.name || "Header logo"}
               className="w-14 h-14 rounded-lg mr-3 object-cover"
             />

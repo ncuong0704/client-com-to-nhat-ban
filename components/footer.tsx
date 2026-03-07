@@ -19,6 +19,7 @@ export function Footer({ footer }: { footer: FooterProps }) {
                 src={footer.logo.image.url}
                 width={56}
                 height={56}
+                type="thumbnail"
                 alt={footer.logo.image.alternativeText || footer.logo.name || "Footer logo"}
                 className="w-14 h-14 rounded-lg mr-3 object-cover"
               />

@@ -70,7 +70,13 @@ export async function getGlobalData(locale: string) {
     });
     return result;
   } catch (error) {
-    console.error(`Error fetching global data for locale ${locale}:`, error);
+    const err = error as Error & { status?: number };
+    const is5xx = err?.status != null && err.status >= 500 && err.status < 600;
+    if (is5xx) {
+      console.warn(`[getGlobalData] Backend ${err.status} cho locale ${locale}. Kiểm tra Strapi (Railway).`);
+    } else {
+      console.error(`Error fetching global data for locale ${locale}:`, error);
+    }
     return null;
   }
 }
@@ -181,7 +187,13 @@ export async function getLandingPageData(locale: string) {
     });
     return result;
   } catch (error) {
-    console.error(`Error fetching landing page data for locale ${locale}:`, error);
+    const err = error as Error & { status?: number };
+    const is5xx = err?.status != null && err.status >= 500 && err.status < 600;
+    if (is5xx) {
+      console.warn(`[getLandingPageData] Backend ${err.status} cho locale ${locale}, hiển thị Loading. Kiểm tra Strapi (Railway) có đang chạy.`);
+    } else {
+      console.error(`Error fetching landing page data for locale ${locale}:`, error);
+    }
     return null;
   }
 }
@@ -240,7 +252,13 @@ export async function getDishData(locale: string) {
     });
     return result;
   } catch (error) {
-    console.error(`Error fetching dish data for locale ${locale}:`, error);
+    const err = error as Error & { status?: number };
+    const is5xx = err?.status != null && err.status >= 500 && err.status < 600;
+    if (is5xx) {
+      console.warn(`[getDishData] Backend ${err.status} cho locale ${locale}. Kiểm tra Strapi (Railway).`);
+    } else {
+      console.error(`Error fetching dish data for locale ${locale}:`, error);
+    }
     return null;
   }
 }
@@ -270,7 +288,13 @@ export async function getVideoData(locale: string) {
     });
     return result;
   } catch (error) {
-    console.error(`Error fetching video data for locale ${locale}:`, error);
+    const err = error as Error & { status?: number };
+    const is5xx = err?.status != null && err.status >= 500 && err.status < 600;
+    if (is5xx) {
+      console.warn(`[getVideoData] Backend ${err.status} cho locale ${locale}. Kiểm tra Strapi (Railway).`);
+    } else {
+      console.error(`Error fetching video data for locale ${locale}:`, error);
+    }
     return null;
   }
 }

@@ -153,6 +153,7 @@ export function VideoSectionClient({ video, videoRes }: { video: VideoSectionPro
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       width={480}
                       height={270}
+                      type="thumbnail"
                     />
                     <span className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <span className="absolute inset-0 flex items-center justify-center">

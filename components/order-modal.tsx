@@ -171,6 +171,7 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
                       alt={item.name}
                       width={56}
                       height={56}
+                      type="thumbnail"
                       className="w-14 h-14 rounded-md object-cover border"
                     />
                     <div className="min-w-0 flex-1">
@@ -266,6 +267,7 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
                 alt={lastAdded.name}
                 width={64}
                 height={64}
+                type="thumbnail"
                 className="w-16 h-16 rounded-md object-cover border"
               />
               <div className="min-w-0">
