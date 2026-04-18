@@ -341,7 +341,7 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
               <input type="hidden" name="content" value={contentHtml} />
               
             </div>
-            <DialogFooter className="sticky bottom-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-3 border-t">
+            <DialogFooter className="sticky bottom-0 z-20 mb-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-3 border-t">
               <Button
                 type="submit"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full w-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
