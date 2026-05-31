@@ -11,6 +11,7 @@ interface RevealSectionProps {
 }
 
 export function RevealSection({ children, delayMs = 0, slide = 6 }: RevealSectionProps) {
+  const clampedDelay = Math.min(delayMs, 300)
   const ref = useRef<HTMLDivElement | null>(null)
   const [visible, setVisible] = useState(false)
 
@@ -22,7 +23,7 @@ export function RevealSection({ children, delayMs = 0, slide = 6 }: RevealSectio
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            setTimeout(() => setVisible(true), delayMs)
+            setTimeout(() => setVisible(true), clampedDelay)
             observer.unobserve(entry.target)
           }
         })

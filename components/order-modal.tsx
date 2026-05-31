@@ -16,9 +16,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import type { Dish } from "@/components/menu-section.client"
+import type { Dish, Branch } from "@/components/menu-section.client"
 import { contactFormAction } from "@/data/action"
 import { StrapiImage } from "./StrapiImage"
+import { formatVND } from "@/lib/utils"
 
 interface OrderModalProps {
   dish: Dish | null
@@ -26,6 +27,9 @@ interface OrderModalProps {
   onClose: () => void
   cartCount?: number
   cartTotal?: number
+  qrImageUrl?: string | null
+  bankTransferInfo?: string | null
+  branches?: Branch[]
   lastAdded?: {
     name: string
     image: string
@@ -51,15 +55,25 @@ interface OrderModalProps {
   onClearCart?: () => void
 }
 
-export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, lastAdded, cartItems = [], onUpdateItem, onRemoveItem, onClearCart }: OrderModalProps) {
+export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, lastAdded, cartItems = [], qrImageUrl, bankTransferInfo, branches = [], onUpdateItem, onRemoveItem, onClearCart }: OrderModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     address: "",
+    email: "",
   })
+  const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery")
+  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "bank_transfer">("cod")
   const [successOpen, setSuccessOpen] = useState(false)
-  const [successInfo, setSuccessInfo] = useState<{ cartCount: number; cartTotal: number } | null>(null)
-  const [showAllItems, setShowAllItems] = useState(false)
+  const [successInfo, setSuccessInfo] = useState<{ cartCount: number; cartTotal: number; deliveryMethod: string; branchName?: string; address?: string } | null>(null)
+  const [formTimestamp, setFormTimestamp] = useState(() => String(Date.now()))
+
+  useEffect(() => {
+    if (open) {
+      setFormTimestamp(String(Date.now()))
+    }
+  }, [open])
 
   const initialFormState = useMemo(
     () => ({
@@ -91,7 +105,13 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
         ${td(notes)}
       </tr>`
     }).join("")
+    const paymentLabel = paymentMethod === "bank_transfer" ? "Chuyển khoản ngân hàng" : "Thanh toán khi nhận hàng (COD)"
+    const deliveryLabel = deliveryMethod === "pickup"
+      ? `Lấy tại quán${selectedBranch ? ` — ${selectedBranch.name}` : ""}`
+      : "Giao tại nhà"
     const table = `
+      <p style="margin:0 0 6px 0;font-size:14px;"><strong>Hình thức nhận hàng:</strong> ${deliveryLabel}</p>
+      <p style="margin:0 0 8px 0;font-size:14px;"><strong>Phương thức thanh toán:</strong> ${paymentLabel}</p>
       <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;font-size:14px;">
         <thead>
           <tr>
@@ -118,20 +138,27 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
       </table>
     `
     return table
-  }, [cartItems, cartCount, cartTotal])
+  }, [cartItems, cartCount, cartTotal, paymentMethod, deliveryMethod, selectedBranch])
 
   useEffect(() => {
     if (state && state.successMessage) {
-      setSuccessInfo({ cartCount, cartTotal })
+      setSuccessInfo({
+        cartCount,
+        cartTotal,
+        deliveryMethod,
+        branchName: deliveryMethod === "pickup" ? selectedBranch?.name : undefined,
+        address: deliveryMethod === "delivery" ? formData.address : undefined,
+      })
       setSuccessOpen(true)
-      setFormData({ name: "", phone: "", address: "" })
+      setFormData({ name: "", phone: "", address: "", email: "" })
+      setDeliveryMethod("delivery")
+      setSelectedBranch(null)
       onClearCart && onClearCart()
       onClose()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.successMessage])
 
-  const priceFormatter = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" })
 
   // Đã bỏ lựa chọn quận/phường và dịch vụ vận chuyển theo yêu cầu
 
@@ -157,14 +184,14 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Tổng tiền</span>
-            <span className="font-semibold text-primary">{priceFormatter.format(cartTotal)}</span>
+            <span className="font-semibold text-primary">{formatVND(cartTotal)}</span>
           </div>
           {cartItems.length > 0 && (
             <div
               className="space-y-3 pr-1 mt-3"
             >
-              <div className="order-cart-scrollbar">
-                {(showAllItems ? cartItems : cartItems.slice(0, 1)).map((item, index) => (
+              <div className="order-cart-scrollbar space-y-2">
+                {cartItems.map((item, index) => (
                   <div key={`${item.dishId}-${index}`} className="border rounded-lg p-2 flex gap-3">
                     <StrapiImage
                       src={item.image}
@@ -224,7 +251,7 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
                       </div>
                     </div>
                     <div className="shrink-0 flex flex-col items-end gap-2">
-                      <div className="text-sm font-semibold text-primary">{priceFormatter.format(item.total)}</div>
+                      <div className="text-sm font-semibold text-primary">{formatVND(item.total)}</div>
                       <button
                         type="button"
                         className="text-xs text-destructive underline-offset-4 hover:underline"
@@ -235,28 +262,6 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
                     </div>
                   </div>
                 ))}
-                {!showAllItems && cartItems.length > 1 && (
-                  <div className="pt-1">
-                    <button
-                      type="button"
-                      className="text-sm text-primary underline underline-offset-4 cursor-pointer"
-                      onClick={() => setShowAllItems(true)}
-                    >
-                      Xem thêm {cartItems.length - 1} món
-                    </button>
-                  </div>
-                )}
-                {showAllItems && cartItems.length > 1 && (
-                  <div className="pt-1">
-                    <button
-                      type="button"
-                      className="text-sm text-primary underline underline-offset-4 cursor-pointer"
-                      onClick={() => setShowAllItems(false)}
-                    >
-                      Thu gọn
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -288,9 +293,82 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
           <form action={formAction}>
             <div className="grid gap-6 py-4">
 
+              {/* Hình thức nhận hàng */}
+              <div className="grid gap-3">
+                <Label className="text-base">Hình thức nhận hàng</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setDeliveryMethod("delivery"); setSelectedBranch(null) }}
+                    className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-sm font-medium transition-colors cursor-pointer ${
+                      deliveryMethod === "delivery"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    <span className="text-2xl">🛵</span>
+                    <span>Nhận đơn tại nhà</span>
+                    <span className="text-xs font-normal">Giao hàng tận nơi</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMethod("pickup")}
+                    className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-sm font-medium transition-colors cursor-pointer ${
+                      deliveryMethod === "pickup"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    <span className="text-2xl">🏪</span>
+                    <span>Lấy đơn tại quán</span>
+                    <span className="text-xs font-normal">Đến lấy trực tiếp</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Chọn chi nhánh (chỉ hiện khi pickup) */}
+              {deliveryMethod === "pickup" && (
+                <div className="grid gap-2">
+                  <Label htmlFor="branch" className="text-base">
+                    Chi nhánh <span className="text-destructive">*</span>
+                  </Label>
+                  {branches.length > 0 ? (
+                    <select
+                      id="branch"
+                      value={selectedBranch?.id ?? ""}
+                      onChange={(e) => {
+                        const b = branches.find((b) => String(b.id) === e.target.value) ?? null
+                        setSelectedBranch(b)
+                      }}
+                      className={`h-11 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${state?.zodErrors?.branchName ? "border-destructive" : "border-input"}`}
+                    >
+                      <option value="">-- Chọn chi nhánh --</option>
+                      {branches.map((b) => (
+                        <option key={b.id} value={String(b.id)}>
+                          {b.name}{b.address ? ` — ${b.address}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-sm text-muted-foreground border rounded-md p-3">
+                      Vui lòng liên hệ nhân viên để biết địa chỉ chi nhánh.
+                    </p>
+                  )}
+                  {state?.zodErrors?.branchName && (
+                    <p className="text-xs text-destructive">{state.zodErrors.branchName[0]}</p>
+                  )}
+                  {selectedBranch?.address && (
+                    <p className="text-xs text-muted-foreground">📍 {selectedBranch.address}</p>
+                  )}
+                  {selectedBranch?.phone && (
+                    <p className="text-xs text-muted-foreground">📞 {selectedBranch.phone}</p>
+                  )}
+                </div>
+              )}
+
               <div className="grid gap-2">
                 <Label htmlFor="name" className="text-base">
-                  Họ và tên
+                  Họ và tên <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="name"
@@ -298,48 +376,144 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Vui lòng nhập họ và tên"
                   required
-                  className="h-11"
+                  className={`h-11 ${state?.zodErrors?.fullName ? "border-destructive" : ""}`}
                 />
+                {state?.zodErrors?.fullName && (
+                  <p className="text-xs text-destructive">{state.zodErrors.fullName[0]}</p>
+                )}
                 <input type="hidden" name="fullName" value={formData.name} />
               </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="phone" className="text-base">
-                  Số điện thoại
+                  Số điện thoại <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="phone"
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="Vui lòng nhập số điện thoại của bạn"
+                  placeholder="Ví dụ: 0912345678"
                   required
-                  className="h-11"
+                  className={`h-11 ${state?.zodErrors?.telephone ? "border-destructive" : ""}`}
                 />
+                {state?.zodErrors?.telephone && (
+                  <p className="text-xs text-destructive">{state.zodErrors.telephone[0]}</p>
+                )}
                 <input type="hidden" name="telephone" value={formData.phone} />
               </div>
+
+              {/* Địa chỉ — chỉ hiện khi delivery */}
+              {deliveryMethod === "delivery" && (
+                <div className="grid gap-2">
+                  <Label htmlFor="address" className="text-base">
+                    Địa chỉ giao hàng <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Số nhà, tên đường, phường/quận..."
+                    required
+                    rows={3}
+                    className={state?.zodErrors?.address ? "border-destructive" : ""}
+                  />
+                  {state?.zodErrors?.address && (
+                    <p className="text-xs text-destructive">{state.zodErrors.address[0]}</p>
+                  )}
+                  <p className="text-xs font-medium text-green-600">
+                    Miễn phí ship trong bán kính 5km. Ngoài bán kính, nhân viên sẽ báo phí ship khi xác nhận đơn.
+                  </p>
+                </div>
+              )}
+
+              {/* Email — không bắt buộc */}
               <div className="grid gap-2">
-                <Label htmlFor="address" className="text-base">
-                  Địa chỉ (TP. Hồ Chí Minh)
+                <Label htmlFor="email" className="text-base">
+                  Email <span className="text-muted-foreground text-xs font-normal">(không bắt buộc)</span>
                 </Label>
-                <Textarea
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Số nhà, tên đường..."
-                  required
-                  rows={3}
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="example@email.com"
+                  className={`h-11 ${state?.zodErrors?.email ? "border-destructive" : ""}`}
                 />
-                <input type="hidden" name="address" value={formData.address} />
-                <p className="text-xs font-medium text-green-600">
-                  Miễn phí ship trong bán kính 5km. Ngoài bán kính, nhân viên sẽ báo phí ship khi xác nhận đơn.
-                </p>
+                {state?.zodErrors?.email && (
+                  <p className="text-xs text-destructive">{state.zodErrors.email[0]}</p>
+                )}
+                <p className="text-xs text-muted-foreground">Nhập email để nhận xác nhận đơn hàng</p>
+                <input type="hidden" name="email" value={formData.email} />
               </div>
+
+              {/* Phương thức thanh toán */}
+              <div className="grid gap-3">
+                <Label className="text-base">Phương thức thanh toán</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("cod")}
+                    className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-sm font-medium transition-colors cursor-pointer ${
+                      paymentMethod === "cod"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    <span className="text-2xl">💵</span>
+                    <span>Thanh toán khi nhận hàng</span>
+                    <span className="text-xs font-normal">(COD)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("bank_transfer")}
+                    className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-sm font-medium transition-colors cursor-pointer ${
+                      paymentMethod === "bank_transfer"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    <span className="text-2xl">🏦</span>
+                    <span>Chuyển khoản</span>
+                    <span className="text-xs font-normal">ngân hàng</span>
+                  </button>
+                </div>
+
+                {paymentMethod === "bank_transfer" && (
+                  <div className="rounded-xl border bg-muted/40 p-4 flex flex-col items-center gap-3">
+                    {qrImageUrl ? (
+                      <img
+                        src={qrImageUrl}
+                        alt="Mã QR chuyển khoản"
+                        className="w-52 h-52 object-contain rounded-lg border bg-white"
+                      />
+                    ) : (
+                      <div className="w-52 h-52 rounded-lg border bg-muted flex items-center justify-center text-sm text-muted-foreground">
+                        Chưa có mã QR
+                      </div>
+                    )}
+                    {bankTransferInfo && (
+                      <pre className="w-full text-xs text-center whitespace-pre-wrap font-sans text-foreground">
+                        {bankTransferInfo}
+                      </pre>
+                    )}
+                    <p className="text-xs text-muted-foreground text-center">
+                      Vui lòng chuyển khoản trước khi đặt đơn. Nhân viên sẽ xác nhận sau khi nhận được thanh toán.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Honeypot & timestamp */}
               <input type="text" name="website" className="hidden" tabIndex={-1} autoComplete="off" />
-              <input type="hidden" name="timestamp" value={String(Date.now())} />
+              <input type="hidden" name="timestamp" value={formTimestamp} />
+              <input type="hidden" name="paymentMethod" value={paymentMethod} />
+              <input type="hidden" name="deliveryMethod" value={deliveryMethod} />
+              <input type="hidden" name="branchName" value={selectedBranch?.name ?? ""} />
+              <input type="hidden" name="address" value={deliveryMethod === "delivery" ? formData.address : ""} />
               {/* Rich text HTML table snapshot */}
               <input type="hidden" name="content" value={contentHtml} />
-              
+
             </div>
             <DialogFooter className="sticky bottom-0 z-20 mb-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-3 border-t">
               <Button
@@ -363,7 +537,7 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
     <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle className="text-xl">Đặt đơn thành công</DialogTitle>
+          <DialogTitle className="text-xl">Đặt đơn thành công 🎉</DialogTitle>
         </DialogHeader>
         <div className="space-y-2 text-sm">
           <div className="flex items-center justify-between">
@@ -372,13 +546,29 @@ export function OrderModal({ dish, open, onClose, cartCount = 0, cartTotal = 0, 
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Tổng tiền</span>
-            <span className="font-semibold text-primary">{priceFormatter.format(successInfo?.cartTotal ?? 0)}</span>
+            <span className="font-semibold text-primary">{formatVND(successInfo?.cartTotal ?? 0)}</span>
           </div>
-          <div className="pt-1 text-xs text-muted-foreground">
-            Miễn phí ship trong bán kính 5km. Ngoài bán kính, nhân viên sẽ báo phí ship khi xác nhận đơn.
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Hình thức</span>
+            <span className="font-semibold">
+              {successInfo?.deliveryMethod === "pickup"
+                ? `🏪 Lấy tại quán${successInfo.branchName ? ` — ${successInfo.branchName}` : ""}`
+                : "🛵 Giao tại nhà"}
+            </span>
           </div>
+          {successInfo?.deliveryMethod === "delivery" && successInfo.address && (
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-muted-foreground shrink-0">Địa chỉ</span>
+              <span className="font-medium text-right">{successInfo.address}</span>
+            </div>
+          )}
+          {successInfo?.deliveryMethod === "delivery" && (
+            <div className="pt-1 text-xs text-muted-foreground">
+              Miễn phí ship trong bán kính 5km. Ngoài bán kính, nhân viên sẽ báo phí ship khi xác nhận đơn.
+            </div>
+          )}
           <div className="pt-2">
-            <span className="text-xs text-orange-500 font-semibold">Lưu ý để ý điện thoại</span>
+            <span className="text-xs text-orange-500 font-semibold">Lưu ý để ý điện thoại để nhân viên liên hệ xác nhận</span>
           </div>
         </div>
         <DialogFooter>

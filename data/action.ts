@@ -1,16 +1,32 @@
 'use server'
 import { calculateSpamScore, isHoneypotTriggered, shouldBlockSubmission } from '@/lib/anti-spam';
 import { sendContactFormNotification } from '@/lib/email-resend';
+import { sendTelegramOrderNotification } from '@/lib/telegram';
 import { RATE_LIMITS, rateLimit } from '@/lib/rate-limit';
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { orderForm, OrderFormProps } from './service';
 
+const VN_PHONE_REGEX = /^(0|\+84)(3[2-9]|5[6-9]|7[06-9]|8[0-9]|9[0-9])[0-9]{7}$/
+
 const contactFormSchema = z.object({
     fullName: z.string().min(1, { message: "Vui lòng nhập họ và tên" }),
-    telephone: z.string().optional(),
-    address: z.string().min(1, { message: "Vui lòng nhập địa chỉ" }),
+    telephone: z.string()
+        .min(1, { message: "Vui lòng nhập số điện thoại" })
+        .regex(VN_PHONE_REGEX, { message: "Số điện thoại không hợp lệ (ví dụ: 0912345678)" }),
+    email: z.union([z.string().email({ message: "Email không hợp lệ" }), z.literal("")]).optional(),
+    deliveryMethod: z.enum(["pickup", "delivery"]).default("delivery"),
+    address: z.string().optional(),
+    branchName: z.string().optional(),
     content: z.any(),
+    paymentMethod: z.enum(["cod", "bank_transfer"]).default("cod"),
+}).superRefine((data, ctx) => {
+    if (data.deliveryMethod === "delivery" && !data.address?.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Vui lòng nhập địa chỉ giao hàng", path: ["address"] });
+    }
+    if (data.deliveryMethod === "pickup" && !data.branchName?.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Vui lòng chọn chi nhánh", path: ["branchName"] });
+    }
 });
 
 export async function contactFormAction(prevState: any, formData: FormData) {
@@ -35,11 +51,19 @@ export async function contactFormAction(prevState: any, formData: FormData) {
         };
     }
 
+    const deliveryMethod = (formData.get("deliveryMethod") as string | null) || "delivery";
+    const branchName = (formData.get("branchName") as string | null) || "";
+    const rawAddress = (formData.get("address") as string | null) || "";
+
     const formDataObject = {
         fullName: (formData.get("fullName") || formData.get("name")) as string | null,
         telephone: (formData.get("telephone") as string | null) || "",
-        address: (formData.get("address") as string | null) || "",
+        email: (formData.get("email") as string | null) || "",
+        deliveryMethod: deliveryMethod as "pickup" | "delivery",
+        address: rawAddress,
+        branchName,
         content: formData.get("content") as any | null,
+        paymentMethod: (formData.get("paymentMethod") as string | null) || "cod",
         // ✅ ANTI-SPAM: Hidden fields
         honeypot: formData.get("website") as string | null,
         timestamp: formData.get("timestamp") as string | null,
@@ -87,11 +111,20 @@ export async function contactFormAction(prevState: any, formData: FormData) {
         };
     }
 
+    const d = validatedFields.data;
+    const effectiveAddress = d.deliveryMethod === "pickup"
+        ? `Lấy tại quán${d.branchName ? ` — ${d.branchName}` : ""}`
+        : (d.address ?? "");
+
     const dataToSend: OrderFormProps = {
-        fullName: validatedFields.data.fullName,
-        telephone: validatedFields.data.telephone || "",
-        address: validatedFields.data.address,
-        content: validatedFields.data.content,
+        fullName: d.fullName,
+        telephone: d.telephone || "",
+        email: d.email || undefined,
+        deliveryMethod: d.deliveryMethod,
+        branchName: d.deliveryMethod === "pickup" ? d.branchName : undefined,
+        address: effectiveAddress,
+        content: d.content,
+        paymentMethod: d.paymentMethod,
     };
 
     const responseData = await orderForm(dataToSend);
@@ -114,16 +147,27 @@ export async function contactFormAction(prevState: any, formData: FormData) {
         };
     }
 
-    // ✅ Gửi email thông báo (không chờ hoàn tất, chạy nền để không làm chậm phản hồi)
-    // Không dùng await - gửi email ngầm, phản hồi người dùng ngay lập tức
-    await sendContactFormNotification({
-        fullName: dataToSend.fullName,
-        telephone: dataToSend.telephone,
-        address: dataToSend.address,
-        content: dataToSend.content,
-    }).catch(error => {
-        console.error('⚠️ Failed to send email notification (non-critical):', error);
-    });
+    await Promise.allSettled([
+        sendContactFormNotification({
+            fullName: dataToSend.fullName,
+            telephone: dataToSend.telephone,
+            email: dataToSend.email,
+            deliveryMethod: dataToSend.deliveryMethod,
+            branchName: dataToSend.branchName,
+            address: dataToSend.address,
+            content: dataToSend.content,
+            paymentMethod: dataToSend.paymentMethod,
+        }).catch(error => console.error('⚠️ Email notification failed:', error)),
+        sendTelegramOrderNotification({
+            fullName: dataToSend.fullName,
+            telephone: dataToSend.telephone,
+            deliveryMethod: dataToSend.deliveryMethod,
+            branchName: dataToSend.branchName,
+            address: dataToSend.address,
+            content: dataToSend.content,
+            paymentMethod: dataToSend.paymentMethod,
+        }).catch(error => console.error('⚠️ Telegram notification failed:', error)),
+    ]);
 
     return {
         ...prevState,

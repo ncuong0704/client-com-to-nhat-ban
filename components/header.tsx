@@ -58,24 +58,29 @@ export function Header({ header }: { header: HeaderProps }) {
               className="w-14 h-14 rounded-lg mr-3 object-cover"
             />
             <div>
-              <h1 className={`${pottaOne.className} text-2xl md:text-3xl font-bold text-primary`}>
+              <p className={`${pottaOne.className} text-2xl md:text-3xl font-bold text-primary`}>
                 {header.logo.name}
-              </h1>
-              <div className={`${pottaOne.className} text-xs md:text-sm text-primary mt-0.5 text-left`}>
+              </p>
+              <p className={`${pottaOne.className} text-xs md:text-sm text-primary mt-0.5 text-left`}>
                 {header.logo.subName}
-              </div>
+              </p>
             </div>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
             {header.menu.map((item) => (
-              <button key={item.name} type="button" className="cursor-pointer text-foreground hover:text-primary transition-colors font-medium" onClick={() => scrollTo(item.scrollTo)}>
+              <a
+                key={item.name}
+                href={`#${item.scrollTo}`}
+                className="cursor-pointer text-foreground hover:text-primary transition-colors font-medium"
+                onClick={(e) => { e.preventDefault(); scrollTo(item.scrollTo) }}
+              >
                 {item.name}
-              </button>
+              </a>
             ))}
 
-            {/* <div className="relative">
+            <div className="relative">
               <button
                 type="button"
                 className="flex items-center gap-1 px-3 py-1 hover:bg-muted transition-colors text-sm"
@@ -125,7 +130,7 @@ export function Header({ header }: { header: HeaderProps }) {
                   </li>
                 </ul>
               )}
-            </div> */}
+            </div>
             <Button
               size="lg"
               className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 cursor-pointer"
@@ -150,15 +155,17 @@ export function Header({ header }: { header: HeaderProps }) {
           <nav className="lg:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-4">
               {header.menu.map((item) => (
-                <button key={item.name} type="button" className="cursor-pointer text-foreground hover:text-primary transition-colors font-medium py-2 text-left" onClick={() => {
-                  setMobileMenuOpen(false);
-                  scrollTo(item.scrollTo);
-                }}>
+                <a
+                  key={item.name}
+                  href={`#${item.scrollTo}`}
+                  className="cursor-pointer text-foreground hover:text-primary transition-colors font-medium py-2 text-left"
+                  onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); scrollTo(item.scrollTo) }}
+                >
                   {item.name}
-                </button>
+                </a>
               ))}
               {/* Language Selector (Mobile) */}
-              {/* <div className="relative">
+              <div className="relative">
                 <button
                   type="button"
                   className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors text-sm"
@@ -210,7 +217,7 @@ export function Header({ header }: { header: HeaderProps }) {
                     </li>
                   </ul>
                 )}
-              </div> */}
+              </div>
               <Button
                 size="lg"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full w-full"

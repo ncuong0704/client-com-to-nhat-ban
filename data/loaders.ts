@@ -63,10 +63,9 @@ export async function getGlobalData(locale: string) {
     )
 
 
-    // ✅ OPTIMIZED CACHING - Tăng cache time cho home page
     const result = await fetchAPI(url.href, {
       method: "GET",
-      next: { revalidate: 1800, tags: ["global-data", `global-data-${locale}`] }
+      next: { revalidate: 300, tags: ["global-data", `global-data-${locale}`] }
     });
     return result;
   } catch (error) {
@@ -180,10 +179,9 @@ export async function getLandingPageData(locale: string) {
     )
 
 
-    // ✅ OPTIMIZED CACHING - Tăng cache time cho home page
     const result = await fetchAPI(url.href, {
       method: "GET",
-      next: { revalidate: 1800, tags: ["landing-page", `landing-page-${locale}`] }
+      next: { revalidate: 300, tags: ["landing-page", `landing-page-${locale}`] }
     });
     return result;
   } catch (error) {
@@ -248,7 +246,7 @@ export async function getDishData(locale: string) {
 
     const result = await fetchAPI(url.href, {
       method: "GET",
-      next: { revalidate: 1800, tags: ["dish", `dish-${locale}`] }
+      next: { revalidate: 60, tags: ["dish", `dish-${locale}`] }
     });
     return result;
   } catch (error) {
@@ -262,6 +260,45 @@ export async function getDishData(locale: string) {
     return null;
   }
 }
+export async function getPaymentSettings() {
+  try {
+    const path = '/api/notification-setting';
+    const url = new URL(path, BASE_URL);
+    url.search = qs.stringify({
+      populate: {
+        bank_qr_image: { fields: ['url', 'alternativeText'] },
+      },
+      fields: ['bank_transfer_info'],
+    });
+    const result = await fetchAPI(url.href, {
+      method: 'GET',
+      next: { revalidate: 300, tags: ['payment-settings'] },
+    });
+    return result;
+  } catch {
+    return null;
+  }
+}
+
+export async function getAddressData() {
+  try {
+    const path = '/api/addresses';
+    const url = new URL(path, BASE_URL);
+    url.search = qs.stringify({
+      filters: { is_active: { $eq: true } },
+      fields: ['name', 'address', 'phone'],
+      sort: ['name:asc'],
+    });
+    const result = await fetchAPI(url.href, {
+      method: 'GET',
+      next: { revalidate: 3600, tags: ['address'] },
+    });
+    return result;
+  } catch {
+    return null;
+  }
+}
+
 export async function getVideoData(locale: string) {
   try {
     const path = '/api/videos';
@@ -284,7 +321,7 @@ export async function getVideoData(locale: string) {
 
     const result = await fetchAPI(url.href, {
       method: "GET",
-      next: { revalidate: 1800, tags: ["video", `video-${locale}`] }
+      next: { revalidate: 300, tags: ["video", `video-${locale}`] }
     });
     return result;
   } catch (error) {

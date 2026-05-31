@@ -1,10 +1,11 @@
-// SEO utility functions
 export function getBaseUrl(): string {
-  // In production, use environment variable or default domain
   if (process.env.NODE_ENV === 'production') {
-    return process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com'
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+    if (!siteUrl) {
+      console.warn('[SEO] NEXT_PUBLIC_SITE_URL chưa được cấu hình. Canonical URL và hreflang sẽ không chính xác.')
+    }
+    return siteUrl || ''
   }
-  // In development, use localhost
   return 'http://localhost:3000'
 }
 

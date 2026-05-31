@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import type { Dish } from "@/components/menu-section.client"
 import { StrapiImage } from "./StrapiImage"
+import { formatVND } from "@/lib/utils"
 
 interface DishCardProps {
   dish: Dish
@@ -47,8 +48,6 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
   })
   const [quantity, setQuantity] = React.useState<number>(1)
   const [notes, setNotes] = React.useState<string>("")
-
-  const priceFormatter = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" })
 
   function toggleTopping(name: string) {
     setToppings((prev) => ({
@@ -167,7 +166,7 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
             {dish.description}
           </p>
           <div className="flex items-center justify-between gap-2">
-            <div className="text-lg font-semibold text-primary whitespace-nowrap">{priceFormatter.format(dish.price)}</div>
+            <div className="text-lg font-semibold text-primary whitespace-nowrap">{formatVND(dish.price)}</div>
             <span className="whitespace-nowrap text-sm text-muted-foreground" style={{ fontSize: "12px" }}>
               Đã bán {dish?.sold?.toLocaleString("vi-VN") || 0}
             </span>
@@ -223,7 +222,7 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
                       {dish?.likes?.toLocaleString("vi-VN") || 0} lượt thích
                     </span>
                   </div>
-                  <div className="text-lg font-semibold text-primary ml-2 whitespace-nowrap">{priceFormatter.format(dish.price)}</div>
+                  <div className="text-lg font-semibold text-primary ml-2 whitespace-nowrap">{formatVND(dish.price)}</div>
                 </div>
               </div>
             </div>
@@ -251,7 +250,7 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
                               />
                               <span className="text-sm">{item.name}</span>
                             </div>
-                            {item.price != null && <span className="text-sm text-foreground/80">+ {priceFormatter.format(item.price)}</span>}
+                            {item.price != null && <span className="text-sm text-foreground/80">+ {formatVND(item.price)}</span>}
                           </label>
                         )
                       })}
@@ -280,7 +279,7 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
                               />
                               <span className="text-sm">{item.name}</span>
                             </div>
-                            <span className="text-sm text-foreground/80">+ {priceFormatter.format(opt.price)}</span>
+                            <span className="text-sm text-foreground/80">+ {formatVND(opt.price)}</span>
                           </label>
                         )
                       })}
@@ -335,7 +334,7 @@ export function DishCard({ dish, onOrder, onAddToCart }: DishCardProps) {
           </div>
           <DialogFooter className="sticky bottom-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-6 pt-4 border-t">
             <Button onClick={handleAdd} className="rounded-full w-full cursor-pointer">
-              Thêm vào giỏ · {priceFormatter.format(grandTotal)}
+              Thêm vào giỏ · {formatVND(grandTotal)}
             </Button>
           </DialogFooter>
         </DialogContent>

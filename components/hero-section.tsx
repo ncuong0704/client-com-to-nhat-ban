@@ -28,9 +28,9 @@ export function HeroSection({ hero }: { hero: HeroProps }) {
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="animate-fade-up [animation-delay:100ms] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 text-balance leading-tight">
+        <h1 className="animate-fade-up [animation-delay:100ms] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 text-balance leading-tight">
           {hero.title}
-        </h2>
+        </h1>
         <p className="animate-fade-up [animation-delay:250ms] text-lg sm:text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto text-pretty leading-relaxed">
           {hero.description}
         </p>

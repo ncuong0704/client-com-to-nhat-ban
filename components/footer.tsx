@@ -1,8 +1,8 @@
 import { FooterProps } from "@/types"
-import { Mail, MapPin, Phone } from "lucide-react"
 import { Potta_One } from "next/font/google"
 import LucideIcon from "./LucideIcon"
 import { StrapiImage } from "./StrapiImage"
+import { sanitizeSvgHtml } from "@/lib/utils"
 const pottaOne = Potta_One({
   weight: "400",
   subsets: ["latin"],
@@ -24,12 +24,12 @@ export function Footer({ footer }: { footer: FooterProps }) {
                 className="w-14 h-14 rounded-lg mr-3 object-cover"
               />
               <div>
-                <h1 className={`${pottaOne.className} text-2xl md:text-3xl font-bold text-white`}>
+                <p className={`${pottaOne.className} text-2xl md:text-3xl font-bold text-white`}>
                   {footer.logo.name}
-                </h1>
-                <div className={`${pottaOne.className} text-xs md:text-sm text-white mt-0.5 text-left`}>
+                </p>
+                <p className={`${pottaOne.className} text-xs md:text-sm text-white mt-0.5 text-left`}>
                   {footer.logo.subName}
-                </div>
+                </p>
               </div>
             </div>
             <p className="text-secondary-foreground/80 leading-relaxed mt-4">
@@ -66,7 +66,7 @@ export function Footer({ footer }: { footer: FooterProps }) {
                   <span
                     className="h-8 w-8 text-primary icon-social"
                     aria-hidden="true"
-                    dangerouslySetInnerHTML={{ __html: item.logo }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeSvgHtml(item.logo) }}
                   />
                 </a>
               ))}

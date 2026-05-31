@@ -7,7 +7,6 @@ import { Footer } from "@/components/footer";
 import { Loading } from "@/components/loading";
 import { getBaseUrl, getHreflangUrls } from "@/lib/seo-utils";
 
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -17,38 +16,35 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
 type Props = {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 };
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
   const hreflangUrls = getHreflangUrls(locale)
   const baseUrl = getBaseUrl()
 
-  // Get locale-specific metadata
-  const localeNames = {
-    vi: 'Tiếng Việt',
-    en: 'English',
-  }
-
-  const localeName = localeNames[locale as keyof typeof localeNames] || 'Tiếng Việt'
-
   return {
     title: {
-      default: `Cơm Tô Nhật Bản | Donburi ngon mỗi ngày - ${localeName}`,
-      template: `%s | Cơm Tô Nhật Bản - ${localeName}`
+      default: 'Cơm Tô Nhật Bản | Donburi ngon mỗi ngày',
+      template: '%s | Cơm Tô Nhật Bản'
     },
-    description: `Cơm Tô Nhật Bản - Donburi ngon mỗi ngày, giao hàng tận nơi. - ${localeName}`,
+    description: 'Cơm Tô Nhật Bản - Donburi ngon mỗi ngày, giao hàng tận nơi.',
     robots: {
       index: true,
       follow: true,
     },
     openGraph: {
       type: 'website',
-      locale: locale === 'vi' ? 'vi_VN' : locale === 'en' ? 'en_US' : 'vi_VN',
+      locale: locale === 'en' ? 'en_US' : 'vi_VN',
       url: `${baseUrl}/${locale}`,
       siteName: 'Cơm Tô Nhật Bản',
+      ...(process.env.NEXT_PUBLIC_OG_IMAGE && {
+        images: [{ url: process.env.NEXT_PUBLIC_OG_IMAGE, width: 1200, height: 630, alt: 'Cơm Tô Nhật Bản' }]
+      }),
     },
     alternates: {
       canonical: `${baseUrl}/${locale}`,
@@ -57,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function RootLayout({
+export default async function LocaleLayout({
   children,
   params,
 }: {
@@ -65,20 +61,30 @@ export default async function RootLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params
+  const lang = locale === 'en' ? 'en' : 'vi'
   const data = await getGlobalData(locale)
+
   if (!data) {
-    // Sử dụng timestamp để force remount component mỗi lần server component render
-    // Khi router.refresh() được gọi, server component sẽ re-render và tạo key mới
     const refreshKey = `loading-${Date.now()}-${Math.random()}`
-    return <Loading key={refreshKey} autoReload={true} reloadDelay={15000} />
+    return (
+      <html lang={lang}>
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+          <Loading key={refreshKey} autoReload={true} reloadDelay={15000} />
+        </body>
+      </html>
+    )
   }
+
   const header = data.data.header
   const footer = data.data.footer
+
   return (
-    <div className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-      {header && <Header header={header} />}
-      {children}
-      {footer && <Footer footer={footer} />}
-    </div>
+    <html lang={lang}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {header && <Header header={header} />}
+        {children}
+        {footer && <Footer footer={footer} />}
+      </body>
+    </html>
   );
 }

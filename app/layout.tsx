@@ -1,8 +1,6 @@
-// app/layout.tsx
 import type { Metadata } from "next"
 import { getBaseUrl, getHreflangUrls } from "@/lib/seo-utils"
 
-type Props = { children: React.ReactNode }
 const baseUrl = getBaseUrl()
 const hreflangUrls = getHreflangUrls('vi')
 
@@ -24,6 +22,9 @@ export const metadata: Metadata = {
     locale: 'vi_VN',
     url: baseUrl,
     siteName: 'Cơm Tô Nhật Bản',
+    ...(process.env.NEXT_PUBLIC_OG_IMAGE && {
+      images: [{ url: process.env.NEXT_PUBLIC_OG_IMAGE, width: 1200, height: 630, alt: 'Cơm Tô Nhật Bản' }]
+    }),
   },
   alternates: {
     canonical: baseUrl,
@@ -31,17 +32,7 @@ export const metadata: Metadata = {
   }
 }
 
-export default function RootLayout({ children }: Props) {
-  return (
-    <html lang="vi" className="mdl-js">
-      <head>
-        <link rel="alternate" hrefLang="vi" href={hreflangUrls.vi} />
-        <link rel="alternate" hrefLang="en" href={hreflangUrls.en} />
-        <link rel="alternate" hrefLang="x-default" href={hreflangUrls['x-default']} />
-      </head>
-      <body className="antialiased">
-        {children}
-      </body>
-    </html>
-  )
+// html/body are provided by app/[locale]/layout.tsx for correct lang attribute
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return children as React.ReactElement
 }

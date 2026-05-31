@@ -5,7 +5,24 @@ import { OrderModal } from "@/components/order-modal"
 import { RevealSection } from "@/components/reveal-section"
 import { Button } from "@/components/ui/button"
 import { MenuSectionProps } from "@/types"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
+import { formatVND } from "@/lib/utils"
+
+const CART_STORAGE_KEY = "donburi_cart"
+
+export type CartItem = {
+  dishId: string
+  name: string
+  image: string
+  description: string
+  quantity: number
+  unitPrice: number
+  toppingTotal: number
+  total: number
+  toppings: string[]
+  isSpicy: boolean | null
+  notes?: string
+}
 
 export interface Dish {
   id: number
@@ -48,11 +65,22 @@ export interface Dish {
   }>
 }
 
+export type Branch = {
+  id: number
+  documentId: string
+  name: string
+  address?: string
+  phone?: string
+}
+
 // Component chính sử dụng hooks
-export function MenuSectionClient({ menu, dishes, locale }: { 
-  menu: MenuSectionProps, 
-  dishes: Dish[], 
-  locale: string 
+export function MenuSectionClient({ menu, dishes, locale, qrImageUrl, bankTransferInfo, branches }: {
+  menu: MenuSectionProps,
+  dishes: Dish[],
+  locale: string,
+  qrImageUrl?: string | null,
+  bankTransferInfo?: string | null,
+  branches?: Branch[],
 }) {
   const [orderOpen, setOrderOpen] = useState(false)
   
@@ -95,33 +123,23 @@ export function MenuSectionClient({ menu, dishes, locale }: {
     })
   }, [activeCategory, dishes])
 
-  const [cartItems, setCartItems] = useState<Array<{
-    dishId: string
-    name: string
-    image: string
-    description: string
-    quantity: number
-    unitPrice: number
-    toppingTotal: number
-    total: number
-    toppings: string[]
-    isSpicy: boolean | null
-    notes?: string
-  }>>([])
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    if (typeof window === "undefined") return []
+    try {
+      const saved = localStorage.getItem(CART_STORAGE_KEY)
+      return saved ? (JSON.parse(saved) as CartItem[]) : []
+    } catch {
+      return []
+    }
+  })
 
-  function handleAddToCart(payload: {
-    dishId: string
-    name: string
-    image: string
-    description: string
-    quantity: number
-    unitPrice: number
-    toppingTotal: number
-    total: number
-    toppings: string[]
-    isSpicy: boolean | null
-    notes?: string
-  }) {
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
+    } catch {}
+  }, [cartItems])
+
+  function handleAddToCart(payload: CartItem) {
     setCartItems((prev) => [...prev, payload])
   }
 
@@ -196,7 +214,7 @@ export function MenuSectionClient({ menu, dishes, locale }: {
 
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
             {filteredDishes.map((dish: Dish, idx: number) => (
-              <RevealSection key={dish.documentId} delayMs={idx}>
+              <RevealSection key={dish.documentId} delayMs={idx * 50}>
                 <DishCard dish={dish} onOrder={() => {}} onAddToCart={handleAddToCart} />
               </RevealSection>
             ))}
@@ -211,6 +229,9 @@ export function MenuSectionClient({ menu, dishes, locale }: {
         cartCount={cartCount}
         cartTotal={cartTotal}
         cartItems={cartItems}
+        qrImageUrl={qrImageUrl}
+        bankTransferInfo={bankTransferInfo}
+        branches={branches}
         onUpdateItem={(index, quantity) => {
           setCartItems((prev) => {
             const next = [...prev]
@@ -225,7 +246,10 @@ export function MenuSectionClient({ menu, dishes, locale }: {
         onRemoveItem={(index) => {
           setCartItems((prev) => prev.filter((_, i) => i !== index))
         }}
-        onClearCart={() => setCartItems([])}
+        onClearCart={() => {
+          setCartItems([])
+          try { localStorage.removeItem(CART_STORAGE_KEY) } catch {}
+        }}
       />
 
       {/* Floating cart bar */}
@@ -235,7 +259,7 @@ export function MenuSectionClient({ menu, dishes, locale }: {
             <div className="rounded-xl border border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-lg p-4 flex items-center justify-between">
               <div className="text-sm">
                 <div className="font-semibold">{cartCount.toLocaleString("vi-VN")} món đã chọn</div>
-                <div className="text-muted-foreground">Tổng: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(cartTotal)}</div>
+                <div className="text-muted-foreground">Tổng: {formatVND(cartTotal)}</div>
               </div>
               <Button className="rounded-full cursor-pointer" onClick={() => setOrderOpen(true)}>Giao hàng</Button>
             </div>

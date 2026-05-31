@@ -1,12 +1,11 @@
-// app/page.tsx - Có thể thêm metadata
 import { redirect } from 'next/navigation';
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: 'Công ty Luật Dedica',
-  description: 'Công ty luật chuyên nghiệp tại Việt Nam',
+  title: 'Cơm Tô Nhật Bản | Donburi ngon mỗi ngày',
+  description: 'Nhà hàng cơm tô Nhật Bản (Donburi) – món ngon mỗi ngày, giao hàng tận nơi.',
   robots: {
-    index: true,
+    index: false,
     follow: true,
   },
 }
