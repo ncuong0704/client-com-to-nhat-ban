@@ -1,3 +1,4 @@
+import https from 'node:https';
 import { getNotificationSettings } from './notification-settings';
 
 /** Escape text for Telegram HTML parse_mode */
@@ -69,12 +70,55 @@ function parseOrderHtml(html: string): string {
     }
   }
 
-  // If parsing failed and left nothing, strip all tags as plain fallback
   if (lines.length === 0) {
     return escapeHtml(html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim());
   }
 
   return lines.join('\n');
+}
+
+/**
+ * Force IPv4 — on some VPS (ZoneCloud), Node resolves api.telegram.org to IPv6 first
+ * and fails with ENETUNREACH/ETIMEDOUT while IPv4 works.
+ */
+function httpsPostJsonIpv4(
+  path: string,
+  payload: string,
+  timeoutMs = 15000
+): Promise<{ status: number; body: string }> {
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: 'api.telegram.org',
+        port: 443,
+        path,
+        method: 'POST',
+        family: 4,
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload),
+        },
+        timeout: timeoutMs,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk) => chunks.push(chunk));
+        res.on('end', () => {
+          resolve({
+            status: res.statusCode || 0,
+            body: Buffer.concat(chunks).toString('utf8'),
+          });
+        });
+      }
+    );
+
+    req.on('timeout', () => {
+      req.destroy(new Error('Telegram request timeout'));
+    });
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
+  });
 }
 
 async function sendTelegramMessage(
@@ -88,19 +132,29 @@ async function sendTelegramMessage(
     text,
   };
   if (parseMode) body.parse_mode = parseMode;
+  const payload = JSON.stringify(body);
+  const path = `/bot${token}/sendMessage`;
 
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const { body: raw } = await httpsPostJsonIpv4(path, payload);
+      const json = JSON.parse(raw) as any;
+      return {
+        ok: !!json.ok,
+        description: json.description,
+        message_id: json.result?.message_id,
+      };
+    } catch (error) {
+      lastError = error;
+      console.warn(`⚠️ Telegram attempt ${attempt}/3 failed:`, (error as Error)?.message || error);
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, 400 * attempt));
+      }
+    }
+  }
 
-  const json = (await res.json()) as any;
-  return {
-    ok: !!json.ok,
-    description: json.description,
-    message_id: json.result?.message_id,
-  };
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 export async function sendTelegramOrderNotification(data: {
@@ -151,7 +205,6 @@ export async function sendTelegramOrderNotification(data: {
     `⏰ ${escapeHtml(now)}`,
   ].filter((l) => l !== null).join('\n');
 
-  // Telegram limit 4096 chars — truncate safely if needed
   const text = lines.length > 4000
     ? `${lines.slice(0, 3950)}\n\n… (nội dung bị cắt)`
     : lines;
@@ -164,7 +217,6 @@ export async function sendTelegramOrderNotification(data: {
       'HTML'
     );
 
-    // Fallback: if HTML parse fails, retry as plain text
     if (!result.ok && result.description?.includes("can't parse entities")) {
       console.warn('⚠️ Telegram HTML parse failed, retrying as plain text:', result.description);
       const plain = text
@@ -188,7 +240,7 @@ export async function sendTelegramOrderNotification(data: {
     console.log('✅ Telegram notification sent, message_id:', result.message_id);
     return true;
   } catch (error: any) {
-    console.error('❌ Telegram notification failed:', error.message);
+    console.error('❌ Telegram notification failed:', error?.message || error);
     return false;
   }
 }
